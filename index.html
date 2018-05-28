@@ -119,6 +119,14 @@
                         <template slot="items" slot-scope="props">
                             <td>{{props.item.name}}</td>
                             <td>{{props.item.email}}</td>
+                            <td class="justify-center layout px-0">
+                                <v-btn icon @click="editAction(props.item)">
+                                  <v-icon>edit</v-icon>
+                                </v-btn>
+                                <v-btn icon @click="deleteAction(props.item)">
+                                  <v-icon color="red darken-2">delete</v-icon>
+                                </v-btn>
+                            </td>
                         </template>
                     </v-data-table>
 

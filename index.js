@@ -116,8 +116,19 @@ let users = {
                 {
                     text: 'email',
                     value: 'email'
+                },
+                {
+                    text: 'actions'
                 }
             ]
+        }
+    },
+    methods: {
+        editAction(user) {
+            alert(JSON.stringify(user));
+        },
+        deleteAction(user) {
+            alert(JSON.stringify(user));
         }
     }
 }
