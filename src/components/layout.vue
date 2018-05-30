@@ -1,23 +1,54 @@
-//GET STATE FROM SESSION STORAGE 
-let saved_state = sessionStorage.getItem('state');
-saved_state = saved_state && JSON.parse(saved_state);
+<template>
+  <v-app>
+    <v-content>
+      <v-toolbar color="green darken-2" dark dense>
+        <v-toolbar-title class="mr-2">
+          <v-icon class="mr-1 mb-1">{{icon}}</v-icon>
+          <span>{{header}}</span>
+        </v-toolbar-title>
 
-//...OR SET INITIAL STATE
-let state = saved_state || {
-    auth: {},
-    users: [],
-    active_tab: 0,
-    tabs: [
-        {
-            name: 'О ПРОЕКТЕ',
-            cmp: 'about'
-        },
-        {
-            name: 'ПОЛЬЗОВАТЕЛИ',
-            cmp: 'unauthenticate'
-        },
-    ]
-};
+
+        <v-tabs v-model="state.active_tab" color="green darken-2">
+
+          <v-tabs-slider color="yellow"></v-tabs-slider>
+
+          <v-tab v-for="tab in state.tabs" :key="tab.name">
+            <v-icon class="mr-1 mb-1">{{ tab.icon}}</v-icon>
+            {{ tab.name }}
+          </v-tab>
+
+        </v-tabs>
+
+        <v-spacer></v-spacer>
+
+        <v-toolbar-items >
+          <v-btn v-if="!state.auth.name" flat @click="dialogs.signin = true">
+            <v-icon class="mr-1 mb-1">fas fa-sign-in-alt</v-icon>вход
+          </v-btn>
+
+          <v-btn v-if="state.auth.name" flat>
+            <v-icon class="mr-1 mb-1">fas fa-user-circle</v-icon>{{state.auth.name}}
+          </v-btn>
+
+          <v-btn v-if="state.auth.name"  flat @click="signout(true)">
+            <v-icon class="mr-1 mb-1">fas fa-sign-out-alt</v-icon>
+          </v-btn>
+
+        </v-toolbar-items>
+
+      </v-toolbar>
+
+      <keep-alive>
+        <component :is="active" :state="state"></component>
+      </keep-alive>
+
+      <signin :visible="dialogs.signin" @cancel="dialogs.signin = false" @submit="signin"></signin>
+    </v-content>
+  </v-app>
+</template>
+
+<script>
+import axios from 'axios'
 
 //MOCK DATA
 axios.interceptors.response.use(
@@ -90,78 +121,41 @@ axios.interceptors.response.use(
     }
 );
 
-//COMPONENTS
-let about = {
-    template: '#about',
-}
+//GET STATE FROM SESSION STORAGE 
+let saved_state = sessionStorage.getItem('state');
+saved_state = saved_state && JSON.parse(saved_state);
 
-let secret = {
-    template: '#secret',
-}
-
-let unauthenticate = {
-    template: '#unauthenticate',
-}
-
-let users = {
-    template: '#users',
-    props: ['state'],
-    data: () => {
-        return {
-            headers: [
-                {
-                    text: 'user name',
-                    value: 'name'
-                },
-                {
-                    text: 'email',
-                    value: 'email'
-                },
-                {
-                    text: 'actions'
-                }
-            ]
-        }
-    },
-    methods: {
-        editAction(user) {
-            alert(JSON.stringify(user));
+//...OR SET INITIAL STATE
+let state = saved_state || {
+    auth: {},
+    users: [],
+    active_tab: 0,
+    tabs: [
+        {
+            name: 'О ПРОЕКТЕ',
+            cmp: 'about'
         },
-        deleteAction(user) {
-            alert(JSON.stringify(user));
-        }
-    }
-}
+        {
+            name: 'ПОЛЬЗОВАТЕЛИ',
+            cmp: 'unauthenticate'
+        },
+    ]
+};
 
-let signin = {
-    template: '#signin',
-    props: ['visible'],
-    data: () => {
-        return {
-            email: 'user@example.com',
-            password: '123'
-        }
+export default {
+    props: {
+        msg: String
     },
-    methods: {
-        submit() {
-            this.$refs.form.validate() && this.$emit('submit', this.email, this.password);
-        }
-    }
-}
-
-//VUE INSTANCE
-new Vue({
-    el: '#app',
     components: {
-        'about': about,
-        'secret': secret,
-        'unauthenticate': unauthenticate,
-        'users': users,
-        'signin': signin,
+        about: () => import('./about.vue'),
+        signin: () => import('./signin.vue'),
+        secret: () => import('./secret.vue'),
+        unauthenticate: () => import('./unauthenticate.vue'),
+        users: () => import('./users.vue')
     },
     data() {
         return {
-            state: {...state}, //MAKE SAVED STATE REACTIVE
+            state: {...state}, //COPY state
             header: 'Vue.js app',
             icon: 'fa-ship',
             dialogs: {
@@ -173,32 +167,28 @@ new Vue({
 
     },
     methods: {
-        async signin(email, password) {
-            //REQUEST SIGNIN
-            let res = await axios(`https://localhost:0/signin?email=${email}&password=${password}`); 
+        async $request(url) {
+            let res = await axios(url); 
 
             //JOIN CURRENT STATE & RESPONSE DATA
             Object.assign(this.state, res.data);
+            
             //SAVE STATE IN SESSION STORAGE
             this.state && sessionStorage.setItem('state', JSON.stringify(this.state));
+        },
+        async signin(email, password) {
+            //REQUEST SIGNIN
+            this.$request(`https://localhost:0/signin?email=${email}&password=${password}`);
             
             this.dialogs.signin = false;
         },
         async signout() {
             //REQUEST SIGNOUT
-            let res = await axios('https://localhost:0/signout');
-
-            //JOIN CURRENT STATE & RESPONSE DATA
-            Object.assign(this.state, res.data);
-            //SAVE STATE IN SESSION STORAGE
-            this.state && sessionStorage.setItem('state', JSON.stringify(this.state));
+            this.$request(`https://localhost:0/signout`);
 
             //CHECK CURRENT TAB DISSAPEARED & ACTIVATE NEAREST
             this.state.active_tab > this.state.tabs.length - 1 && (this.state.active_tab = this.state.tabs.length - 1 + '');
         }
-    },
-    created() {
-        document.title = this.header;
     },
     computed: {
         active() {
@@ -212,4 +202,16 @@ new Vue({
             this.state && sessionStorage.setItem('state', JSON.stringify(this.state));
         }
     }
-});
+}
+</script>
+
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style scoped>
+    .container {
+        height: calc(100% - 48px);
+    }
+
+    .toolbar .tabs {
+        width: auto;
+    }    
+</style>
