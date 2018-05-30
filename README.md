@@ -1,4 +1,4 @@
 # Vue cli application example
-clone
-cd
-npm install
+-clone
+-cd
+-npm install
