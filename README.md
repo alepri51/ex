@@ -1,5 +1,6 @@
 # Vue cli application example
 
-  - clone
-  - cd
+  - clone this repo
+  - cd to folder
   - npm install
+  - npm run serve

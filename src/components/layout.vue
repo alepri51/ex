@@ -172,17 +172,17 @@ export default {
 
             //JOIN CURRENT STATE & RESPONSE DATA
             Object.assign(this.state, res.data);
-            
+
             //SAVE STATE IN SESSION STORAGE
             this.state && sessionStorage.setItem('state', JSON.stringify(this.state));
         },
-        async signin(email, password) {
+        signin(email, password) {
             //REQUEST SIGNIN
             this.$request(`https://localhost:0/signin?email=${email}&password=${password}`);
             
             this.dialogs.signin = false;
         },
-        async signout() {
+        signout() {
             //REQUEST SIGNOUT
             this.$request(`https://localhost:0/signout`);
 
@@ -197,7 +197,7 @@ export default {
         }
     },
     watch: {
-        'state.active_tab': function(val) {
+        'state.active_tab': function() {
             //SAVE STATE IN SESSION STORAGE
             this.state && sessionStorage.setItem('state', JSON.stringify(this.state));
         }
